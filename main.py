@@ -104,19 +104,9 @@ def run_user_input_mode():
     print(f"A 점수: {score_a}")
     print(f"B 점수: {score_b}")
 
-    # ★ 새로 추가: MAC 연산 평균 시간 측정 함수
-def measure_mac_time(pattern, filter_matrix):
-    """MAC 연산을 REPEAT번 반복해서 1회 평균 시간(ms)을 돌려준다"""
-    start = time.perf_counter()          # 시작 시각 기록
-
-    for _ in range(REPEAT):              # REPEAT번 반복
-        mac(pattern, filter_matrix)
-
-    end = time.perf_counter()            # 끝난 시각 기록
-
-    total_seconds = end - start                  # 걸린 전체 시간(초)
-    average_ms = total_seconds / REPEAT * 1000   # 1회 평균, 초 → ms
-    return average_ms
+    # 연산 시간 측정 (입력/출력 시간은 제외하고 MAC 연산만 측정)
+    avg_ms = measure_mac_time(pattern, filter_a)
+    print(f"연산 시간(평균/{REPEAT}회): {avg_ms:.3f} ms")
 
     # 판정
     result = judge(score_a, score_b)
