@@ -1,11 +1,13 @@
 # Mini NPU Simulator
 # MAC 연산으로 패턴이 십자가(Cross)인지 X인지 판별하는 프로그램
 
-# Mini NPU Simulator
-# MAC 연산으로 패턴이 십자가(Cross)인지 X인지 판별하는 프로그램
+import time  # ★ 새로 추가: 시간 측정용 표준 라이브러리
 
-# ★ 새로 추가: 점수를 같다고 볼 허용 오차
+# 점수를 같다고 볼 허용 오차
 EPSILON = 1e-9
+
+# ★ 새로 추가: 시간 측정 반복 횟수
+REPEAT = 10
 
 
 # ★ 새로 추가: n x n 배열을 한 줄씩 입력받는 함수
@@ -68,6 +70,20 @@ def judge(score_a, score_b):
     else:
         return "B"
 
+# ★ 새로 추가: MAC 연산 평균 시간 측정 함수
+def measure_mac_time(pattern, filter_matrix):
+    """MAC 연산을 REPEAT번 반복해서 1회 평균 시간(ms)을 돌려준다"""
+    start = time.perf_counter()          # 시작 시각 기록
+
+    for _ in range(REPEAT):              # REPEAT번 반복
+        mac(pattern, filter_matrix)
+
+    end = time.perf_counter()            # 끝난 시각 기록
+
+    total_seconds = end - start                  # 걸린 전체 시간(초)
+    average_ms = total_seconds / REPEAT * 1000   # 1회 평균, 초 → ms
+    return average_ms
+
 # ★ 수정: 모드 1에서 필터와 패턴을 입력받도록 변경
 def run_user_input_mode():
     """모드 1: 사용자가 3x3 필터와 패턴을 직접 입력하는 모드"""
@@ -87,6 +103,21 @@ def run_user_input_mode():
     print_section("[3] MAC 결과")
     print(f"A 점수: {score_a}")
     print(f"B 점수: {score_b}")
+
+    # ★ 새로 추가: MAC 연산 평균 시간 측정 함수
+def measure_mac_time(pattern, filter_matrix):
+    """MAC 연산을 REPEAT번 반복해서 1회 평균 시간(ms)을 돌려준다"""
+    start = time.perf_counter()          # 시작 시각 기록
+
+    for _ in range(REPEAT):              # REPEAT번 반복
+        mac(pattern, filter_matrix)
+
+    end = time.perf_counter()            # 끝난 시각 기록
+
+    total_seconds = end - start                  # 걸린 전체 시간(초)
+    average_ms = total_seconds / REPEAT * 1000   # 1회 평균, 초 → ms
+    return average_ms
+
     # 판정
     result = judge(score_a, score_b)
     if result == "UNDECIDED":
