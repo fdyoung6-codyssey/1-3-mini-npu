@@ -40,6 +40,18 @@ def print_section(title):
     print("#---------------------------------------")
 
 
+# ★ 새로 추가: MAC 연산 함수
+def mac(pattern, filter_matrix):
+    """패턴과 필터의 같은 위치끼리 곱하고(Multiply), 모두 더한다(Accumulate)"""
+    size = len(pattern)  # 배열 크기 (3x3이면 3)
+    total = 0.0          # 곱한 값을 계속 더해갈 변수
+
+    for i in range(size):          # i: 줄 번호 (0, 1, 2)
+        for j in range(size):      # j: 칸 번호 (0, 1, 2)
+            total += pattern[i][j] * filter_matrix[i][j]
+
+    return total
+
 # ★ 수정: 모드 1에서 필터와 패턴을 입력받도록 변경
 def run_user_input_mode():
     """모드 1: 사용자가 3x3 필터와 패턴을 직접 입력하는 모드"""
@@ -52,11 +64,13 @@ def run_user_input_mode():
     print_section("[2] 패턴 입력")
     pattern = read_matrix("패턴", 3)
 
-    # 확인용 출력 (나중에 MAC 연산으로 바꿀 예정)
-    print("\n[확인] 저장된 값")
-    print("필터 A:", filter_a)
-    print("필터 B:", filter_b)
-    print("패턴  :", pattern)
+    # MAC 연산으로 점수 계산
+    score_a = mac(pattern, filter_a)
+    score_b = mac(pattern, filter_b)
+
+    print_section("[3] MAC 결과")
+    print(f"A 점수: {score_a}")
+    print(f"B 점수: {score_b}")
 
 
 def run_json_mode():
