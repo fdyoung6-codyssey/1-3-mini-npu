@@ -1,6 +1,12 @@
 # Mini NPU Simulator
 # MAC 연산으로 패턴이 십자가(Cross)인지 X인지 판별하는 프로그램
 
+# Mini NPU Simulator
+# MAC 연산으로 패턴이 십자가(Cross)인지 X인지 판별하는 프로그램
+
+# ★ 새로 추가: 점수를 같다고 볼 허용 오차
+EPSILON = 1e-9
+
 
 # ★ 새로 추가: n x n 배열을 한 줄씩 입력받는 함수
 def read_matrix(name, size):
@@ -52,6 +58,16 @@ def mac(pattern, filter_matrix):
 
     return total
 
+# ★ 새로 추가: 두 점수를 비교해서 판정하는 함수
+def judge(score_a, score_b):
+    """점수 차이가 EPSILON보다 작으면 동점, 아니면 더 큰 쪽을 고른다"""
+    if abs(score_a - score_b) < EPSILON:
+        return "UNDECIDED"   # 동점 → 판정 불가
+    elif score_a > score_b:
+        return "A"
+    else:
+        return "B"
+
 # ★ 수정: 모드 1에서 필터와 패턴을 입력받도록 변경
 def run_user_input_mode():
     """모드 1: 사용자가 3x3 필터와 패턴을 직접 입력하는 모드"""
@@ -71,6 +87,12 @@ def run_user_input_mode():
     print_section("[3] MAC 결과")
     print(f"A 점수: {score_a}")
     print(f"B 점수: {score_b}")
+    # 판정
+    result = judge(score_a, score_b)
+    if result == "UNDECIDED":
+        print(f"판정: 판정 불가 (|A-B| < {EPSILON})")
+    else:
+        print(f"판정: {result}")
 
 
 def run_json_mode():
