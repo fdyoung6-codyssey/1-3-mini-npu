@@ -248,6 +248,32 @@ def run_performance(filters):
         label = f"{size}x{size}"
         print(f"{label:<10}{avg_ms:<16.4f}{size * size}")
 
+# ★ 새로 추가: 결과 요약 함수
+def print_summary(results):
+    """전체/통과/실패 개수와 실패 케이스 목록을 출력한다"""
+    total = len(results)
+
+    # 통과한 케이스 개수 세기
+    passed = 0
+    for r in results:
+        if r["passed"]:
+            passed += 1
+
+    failed = total - passed
+
+    print(f"총 테스트: {total}개")
+    print(f"통과: {passed}개")
+    print(f"실패: {failed}개")
+
+    # 실패 케이스가 있으면 이름과 이유를 출력
+    if failed > 0:
+        print("\n실패 케이스:")
+        for r in results:
+            if not r["passed"]:
+                print(f"- {r['key']}: {r['reason']}")
+    else:
+        print("\n실패 케이스 없음")
+
 
 # ★ 수정: 모드 1에서 필터와 패턴을 입력받도록 변경
 def run_user_input_mode():
@@ -295,6 +321,9 @@ def run_json_mode():
 
     print_section(f"[3] 성능 분석 (평균/{REPEAT}회)")
     run_performance(filters)
+
+    print_section("[4] 결과 요약")
+    print_summary(results)
 
 
 def main():
