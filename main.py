@@ -221,6 +221,34 @@ def analyze_patterns(data, filters):
 
     return results
 
+# ★ 새로 추가: 성능 분석 함수
+def run_performance(filters):
+    """크기별 MAC 연산 평균 시간을 측정해 표로 출력한다"""
+    # 3x3은 data.json에 없으므로 십자가 패턴을 직접 만들어 사용
+    cross_3 = [
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 0.0],
+    ]
+    test_sets = {3: cross_3}
+
+    # 5, 13, 25는 data.json의 Cross 필터를 사용
+    for size in sorted(filters):
+        matrix = filters[size].get("Cross")
+        if is_square(matrix, size):
+            test_sets[size] = matrix
+
+    # 표 머리글
+    print(f"{'크기':<8}{'평균 시간(ms)':<14}{'연산 횟수(N²)'}")
+    print("-" * 40)
+
+    # 크기별로 측정해서 한 줄씩 출력
+    for size, matrix in test_sets.items():
+        avg_ms = measure_mac_time(matrix, matrix)   # 입출력 없이 연산만 측정
+        label = f"{size}x{size}"
+        print(f"{label:<10}{avg_ms:<16.4f}{size * size}")
+
+
 # ★ 수정: 모드 1에서 필터와 패턴을 입력받도록 변경
 def run_user_input_mode():
     """모드 1: 사용자가 3x3 필터와 패턴을 직접 입력하는 모드"""
@@ -264,6 +292,9 @@ def run_json_mode():
 
     print_section("[2] 패턴 분석 (라벨 정규화 적용)")
     results = analyze_patterns(data, filters)
+
+    print_section(f"[3] 성능 분석 (평균/{REPEAT}회)")
+    run_performance(filters)
 
 
 def main():
