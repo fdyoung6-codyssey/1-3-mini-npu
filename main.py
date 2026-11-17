@@ -1,13 +1,24 @@
 # Mini NPU Simulator
 # MAC 연산으로 패턴이 십자가(Cross)인지 X인지 판별하는 프로그램
 
-import time  # ★ 새로 추가: 시간 측정용 표준 라이브러리
+import time  # 시간 측정용 표준 라이브러리
+import json  # ★ 새로 추가: JSON 파일 읽기용 표준 라이브러리
 
 # 점수를 같다고 볼 허용 오차
 EPSILON = 1e-9
 
-# ★ 새로 추가: 시간 측정 반복 횟수
+# 시간 측정 반복 횟수
 REPEAT = 10
+
+# ★ 새로 추가: 읽어올 데이터 파일 이름
+DATA_FILE = "data.json"
+
+# ★ 새로 추가: 여러 모양의 라벨을 표준 라벨로 바꾸는 표
+LABEL_MAP = {
+    "+": "Cross",
+    "cross": "Cross",
+    "x": "X",
+}
 
 
 # ★ 새로 추가: n x n 배열을 한 줄씩 입력받는 함수
@@ -84,6 +95,52 @@ def measure_mac_time(pattern, filter_matrix):
     average_ms = total_seconds / REPEAT * 1000   # 1회 평균, 초 → ms
     return average_ms
 
+# ★ 새로 추가: 라벨 정규화 함수
+def normalize_label(label):
+    """'+', 'cross', 'x' 같은 라벨을 표준 라벨 'Cross' 또는 'X'로 바꾼다"""
+    key = str(label).strip().lower()   # 앞뒤 공백 제거 + 소문자로 통일
+    return LABEL_MAP.get(key)          # 표에 없는 라벨이면 None을 돌려줌
+
+
+# ★ 새로 추가: JSON 파일 읽기 함수
+def load_json(path):
+    """JSON 파일을 읽어 딕셔너리로 돌려준다. 실패하면 None"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"오류: '{path}' 파일을 찾을 수 없습니다.")
+    except json.JSONDecodeError:
+        print(f"오류: '{path}' 파일의 JSON 형식이 올바르지 않습니다.")
+    return None
+
+
+# ★ 새로 추가: 필터 불러오기 함수
+def load_filters(data):
+    """filters 부분을 {크기: {"Cross": 배열, "X": 배열}} 모양으로 정리한다"""
+    filters = {}
+
+    for key, value in data.get("filters", {}).items():
+        # "size_5" → 밑줄(_)로 잘라서 뒤쪽 "5"를 숫자로 바꾸기
+        try:
+            size = int(key.split("_")[1])
+        except (IndexError, ValueError):
+            print(f"경고: 필터 키 '{key}'에서 크기를 알 수 없어 건너뜁니다.")
+            continue
+
+        filters[size] = {}
+        for label, matrix in value.items():
+            std_label = normalize_label(label)
+            if std_label is None:
+                print(f"경고: {key}의 알 수 없는 라벨 '{label}'은 건너뜁니다.")
+                continue
+            filters[size][std_label] = matrix
+
+        loaded = ", ".join(filters[size].keys())
+        print(f"✓ {key} 필터 로드 완료 ({loaded})")
+
+    return filters
+
 # ★ 수정: 모드 1에서 필터와 패턴을 입력받도록 변경
 def run_user_input_mode():
     """모드 1: 사용자가 3x3 필터와 패턴을 직접 입력하는 모드"""
@@ -118,7 +175,12 @@ def run_user_input_mode():
 
 def run_json_mode():
     """모드 2: data.json 파일을 읽어서 분석하는 모드"""
-    print("\n[모드 2] data.json 분석 모드입니다. (준비 중)")
+    data = load_json(DATA_FILE)
+    if data is None:
+        return   # 파일을 못 읽으면 모드 2를 끝냄
+
+    print_section("[1] 필터 로드")
+    filters = load_filters(data)
 
 
 def main():
