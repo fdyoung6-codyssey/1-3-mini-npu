@@ -141,6 +141,86 @@ def load_filters(data):
 
     return filters
 
+# ★ 새로 추가: 크기 검사 함수
+def is_square(matrix, size):
+    """matrix가 size x size 크기의 2차원 리스트인지 확인한다"""
+    if not isinstance(matrix, list) or len(matrix) != size:
+        return False
+    for row in matrix:
+        if not isinstance(row, list) or len(row) != size:
+            return False
+    return True
+
+
+# ★ 새로 추가: 패턴 분석 함수
+def analyze_patterns(data, filters):
+    """패턴마다 필터를 골라 판정하고, 결과를 리스트로 돌려준다"""
+    results = []   # 케이스별 결과를 모아둘 리스트
+
+    for key, value in data.get("patterns", {}).items():
+        print(f"--- {key} ---")
+
+        # 결과 기록용 딕셔너리 (기본값은 FAIL)
+        record = {"key": key, "passed": False, "reason": ""}
+        results.append(record)
+
+        # 1) 키에서 크기 N 꺼내기: "size_13_1" → "13"
+        try:
+            size = int(key.split("_")[1])
+        except (IndexError, ValueError):
+            record["reason"] = "키에서 크기를 알 수 없음"
+            print(f"FAIL ({record['reason']})")
+            continue
+
+        # 2) 해당 크기의 필터가 있는지 확인
+        f = filters.get(size, {})
+        if "Cross" not in f or "X" not in f:
+            record["reason"] = f"size_{size} 필터 없음"
+            print(f"FAIL ({record['reason']})")
+            continue
+
+        # 3) 정답 라벨 정규화 ('+' → Cross, 'x' → X)
+        expected = normalize_label(value.get("expected", ""))
+        if expected is None:
+            record["reason"] = f"알 수 없는 expected 값 '{value.get('expected')}'"
+            print(f"FAIL ({record['reason']})")
+            continue
+
+        # 4) 크기 검사: 패턴과 필터가 모두 size x size 인지
+        pattern = value.get("input")
+        if not (is_square(pattern, size)
+                and is_square(f["Cross"], size)
+                and is_square(f["X"], size)):
+            record["reason"] = f"크기 불일치 ({size}x{size}가 아님)"
+            print(f"FAIL ({record['reason']})")
+            continue
+
+        # 5) MAC 연산 및 판정 (A=Cross, B=X 로 생각해서 judge 재사용)
+        score_cross = mac(pattern, f["Cross"])
+        score_x = mac(pattern, f["X"])
+        result = judge(score_cross, score_x)
+        if result == "A":
+            decision = "Cross"
+        elif result == "B":
+            decision = "X"
+        else:
+            decision = "UNDECIDED"
+
+        # 6) 정답과 비교
+        print(f"Cross 점수: {score_cross}")
+        print(f"X 점수: {score_x}")
+        if decision == expected:
+            record["passed"] = True
+            print(f"판정: {decision} | expected: {expected} | PASS")
+        else:
+            if decision == "UNDECIDED":
+                record["reason"] = "동점(UNDECIDED) 처리 규칙에 따라 FAIL"
+            else:
+                record["reason"] = f"판정 {decision}이(가) expected {expected}와 다름"
+            print(f"판정: {decision} | expected: {expected} | FAIL ({record['reason']})")
+
+    return results
+
 # ★ 수정: 모드 1에서 필터와 패턴을 입력받도록 변경
 def run_user_input_mode():
     """모드 1: 사용자가 3x3 필터와 패턴을 직접 입력하는 모드"""
@@ -181,6 +261,9 @@ def run_json_mode():
 
     print_section("[1] 필터 로드")
     filters = load_filters(data)
+
+    print_section("[2] 패턴 분석 (라벨 정규화 적용)")
+    results = analyze_patterns(data, filters)
 
 
 def main():
