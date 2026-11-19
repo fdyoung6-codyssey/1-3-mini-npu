@@ -95,6 +95,34 @@ def measure_mac_time(pattern, filter_matrix):
     average_ms = total_seconds / REPEAT * 1000   # 1회 평균, 초 → ms
     return average_ms
 
+# ★ 보너스: 2차원 배열을 1차원으로 펼치는 함수
+def flatten(matrix):
+    """[[0,1],[1,0]] → [0,1,1,0] 처럼 한 줄로 펼친다"""
+    flat = []
+    for row in matrix:
+        for value in row:
+            flat.append(value)
+    return flat
+
+
+# ★ 보너스: 1차원 MAC 연산 함수 (반복문 1개)
+def mac_flat(flat_pattern, flat_filter):
+    """1차원 리스트끼리 같은 위치를 곱하고 모두 더한다"""
+    total = 0.0
+    for k in range(len(flat_pattern)):
+        total += flat_pattern[k] * flat_filter[k]
+    return total
+
+
+# ★ 보너스: 1차원 MAC 평균 시간 측정 함수
+def measure_flat_time(flat_pattern, flat_filter):
+    """1차원 MAC 연산을 REPEAT번 반복해서 1회 평균 시간(ms)을 돌려준다"""
+    start = time.perf_counter()
+    for _ in range(REPEAT):
+        mac_flat(flat_pattern, flat_filter)
+    end = time.perf_counter()
+    return (end - start) / REPEAT * 1000
+
 # ★ 새로 추가: 라벨 정규화 함수
 def normalize_label(label):
     """'+', 'cross', 'x' 같은 라벨을 표준 라벨 'Cross' 또는 'X'로 바꾼다"""
@@ -221,9 +249,9 @@ def analyze_patterns(data, filters):
 
     return results
 
-# ★ 새로 추가: 성능 분석 함수
+# 성능 분석 함수 (보너스: 2차원 / 1차원 비교)
 def run_performance(filters):
-    """크기별 MAC 연산 평균 시간을 측정해 표로 출력한다"""
+    """크기별 MAC 연산 평균 시간을 2차원/1차원 방식으로 비교해 표로 출력한다"""
     # 3x3은 data.json에 없으므로 십자가 패턴을 직접 만들어 사용
     cross_3 = [
         [0.0, 1.0, 0.0],
@@ -239,14 +267,17 @@ def run_performance(filters):
             test_sets[size] = matrix
 
     # 표 머리글
-    print(f"{'크기':<8}{'평균 시간(ms)':<14}{'연산 횟수(N²)'}")
-    print("-" * 40)
+    print(f"{'크기':<8}{'2차원(ms)':<12}{'1차원(ms)':<12}{'연산 횟수(N²)'}")
+    print("-" * 48)
 
-    # 크기별로 측정해서 한 줄씩 출력
     for size, matrix in test_sets.items():
-        avg_ms = measure_mac_time(matrix, matrix)   # 입출력 없이 연산만 측정
+        avg_2d = measure_mac_time(matrix, matrix)
+
+        flat = flatten(matrix)                 # 펼치기는 측정 전에 미리 해 둠
+        avg_1d = measure_flat_time(flat, flat)
+
         label = f"{size}x{size}"
-        print(f"{label:<10}{avg_ms:<16.4f}{size * size}")
+        print(f"{label:<10}{avg_2d:<14.4f}{avg_1d:<14.4f}{size * size}")
 
 # ★ 새로 추가: 결과 요약 함수
 def print_summary(results):
